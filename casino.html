@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>🎰 SAIMON Casino</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--t:#e6edf3;--t2:#8b949e;--p:#3390ec;--gr:#3fb950;--rd:#f85149;--gold:#e3b341;--border:#30363d;--ease:cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+button{border:none;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s}
+button:active{transform:scale(.96)}
+input{font-family:inherit;background:var(--bg3);border:1px solid var(--border);color:var(--t);border-radius:10px;padding:10px 14px;width:100%;font-size:16px;outline:none}
+input:focus{border-color:var(--p)}
+
+/* ── Auth ── */
+#authWrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;gap:16px}
+#authWrap h1{font-size:28px;background:linear-gradient(135deg,#f6c90e,#f85149,#3390ec);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#authWrap p{color:var(--t2);font-size:14px;text-align:center}
+#authWrap form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px}
+.btn{padding:12px 20px;border-radius:12px;font-size:15px;font-weight:600;background:var(--p);color:#fff;width:100%}
+.btn.gr{background:var(--gr)}
+.btn.rd{background:var(--rd)}
+.btn.gold{background:linear-gradient(135deg,#f6c90e,#e8890c);color:#000}
+.btn.ghost{background:var(--bg3);color:var(--t);border:1px solid var(--border)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.err{color:var(--rd);font-size:13px;min-height:18px;text-align:center}
+
+/* ── Layout ── */
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden}
+#topbar{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));background:var(--bg2);border-bottom:1px solid var(--border)}
+.logo{font-size:18px;font-weight:800;background:linear-gradient(135deg,#f6c90e,#f85149);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex-shrink:0}
+.mars-badge{display:flex;align-items:center;gap:5px;background:var(--bg3);border-radius:20px;padding:5px 12px;font-size:14px;font-weight:600;margin-left:auto}
+#avatarBtn{width:34px;height:34px;border-radius:50%;background:var(--bg3);overflow:hidden;flex-shrink:0;cursor:pointer}
+#avatarBtn img{width:100%;height:100%;object-fit:cover}
+
+/* ── Tabs ── */
+#tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--border);background:var(--bg2)}
+.tab{flex:1;padding:12px 6px;font-size:13px;font-weight:600;color:var(--t2);background:none;border-bottom:2px solid transparent;border-radius:0}
+.tab.active{color:var(--t);border-bottom-color:var(--p)}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+
+/* ── Crash ── */
+#crashScreen{display:flex;flex-direction:column;gap:16px}
+#crashCanvas{width:100%;height:220px;background:linear-gradient(180deg,#0d1117 0%,#0a1628 100%);border-radius:18px;border:1px solid var(--border);position:relative;overflow:hidden}
+#crashCanvas canvas{width:100%;height:100%;display:block}
+.mult-display{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+#multNum{font-size:58px;font-weight:900;letter-spacing:-2px;transition:color .2s}
+#multNum.win{color:var(--gr)}
+#multNum.crashed{color:var(--rd)}
+#multNum.waiting{color:var(--t2);font-size:28px}
+#roundInfo{font-size:12px;color:var(--t2);position:absolute;top:10px;left:14px}
+#historyDots{position:absolute;top:10px;right:14px;display:flex;gap:5px}
+.hdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+#crashBetPanel{background:var(--bg2);border-radius:16px;border:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:12px}
+#betType{display:flex;gap:8px}
+.btBtn{flex:1;padding:9px;border-radius:10px;font-size:13px;font-weight:600;background:var(--bg3);color:var(--t2);border:1.5px solid transparent}
+.btBtn.active{background:rgba(51,144,236,.15);color:var(--p);border-color:var(--p)}
+#marsInput{display:flex;gap:8px;align-items:center}
+#marsInput input{flex:1}
+.qBtn{padding:6px 10px;border-radius:8px;font-size:12px;background:var(--bg3);color:var(--t2);font-weight:600;white-space:nowrap}
+#nftPicker{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.nftChip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:12px;font-size:13px;font-weight:600;background:var(--bg3);border:1.5px solid transparent;cursor:pointer;white-space:nowrap}
+.nftChip.selected{border-color:var(--p);background:rgba(51,144,236,.15)}
+.nftChip .ne{font-size:20px}
+#betBtn{padding:14px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#3390ec,#2060a0);color:#fff}
+#cashBtn{padding:14px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#3fb950,#1a7431);color:#fff;display:none}
+#betStatus{text-align:center;color:var(--t2);font-size:13px;min-height:20px}
+
+#betsTable{background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden}
+.bt-head,.bt-row{display:grid;grid-template-columns:1fr 80px 80px 80px;gap:0;padding:10px 14px;font-size:13px}
+.bt-head{color:var(--t2);font-weight:600;border-bottom:1px solid var(--border);font-size:12px}
+.bt-row{border-bottom:1px solid rgba(48,54,61,.5)}
+.bt-row:last-child{border-bottom:none}
+.bt-row.won{color:var(--gr)}
+.bt-row.lost{color:var(--rd)}
+.bt-row .user{display:flex;align-items:center;gap:7px}
+.av-sm{width:22px;height:22px;border-radius:50%;background:var(--bg3);object-fit:cover;flex-shrink:0}
+
+/* ── Upgrade ── */
+#upgradeScreen{display:flex;flex-direction:column;gap:16px}
+.upg-nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.upg-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:16px;padding:14px 10px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative}
+.upg-card:hover,.upg-card.sel{border-color:var(--p);background:rgba(51,144,236,.08)}
+.upg-emoji{font-size:36px;display:block;margin-bottom:6px}
+.upg-name{font-size:13px;font-weight:600}
+.upg-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.upg-badge{position:absolute;top:8px;right:8px;font-size:10px;background:rgba(248,81,73,.2);color:var(--rd);border-radius:6px;padding:2px 6px}
+.upg-badge.rare{background:rgba(51,144,236,.2);color:var(--p)}
+.upg-badge.epic{background:rgba(163,97,230,.2);color:#a361e6}
+.upg-badge.legendary{background:rgba(227,179,65,.2);color:var(--gold)}
+#upgPanel{background:var(--bg2);border-radius:18px;border:1px solid var(--border);padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.big-nft{width:110px;height:110px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:48px;position:relative}
+.big-nft .bd-label{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1px 7px;color:var(--t2)}
+#upgResult{width:100%;text-align:center;display:none;flex-direction:column;align-items:center;gap:8px}
+#upgResult.show{display:flex}
+
+/* ── NFT Duel ── */
+#duelScreen{display:flex;flex-direction:column;gap:16px}
+.duel-mode{display:flex;gap:10px}
+.dm-card{flex:1;background:var(--bg2);border-radius:16px;border:1.5px solid var(--border);padding:16px;text-align:center;cursor:pointer;transition:border-color .15s}
+.dm-card.active{border-color:var(--p)}
+.dm-card .dm-ico{font-size:32px;margin-bottom:8px}
+.dm-card h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.dm-card p{font-size:12px;color:var(--t2)}
+#duelPickNft,.duel-pick-area{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+#duelResult{background:var(--bg2);border-radius:16px;border:1px solid var(--border);padding:20px;text-align:center;display:none}
+#duelResult.show{display:block}
+.res-big{font-size:56px;margin:8px 0}
+.res-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.res-sub{font-size:14px;color:var(--t2)}
+
+/* ── History ── */
+.hist-list{display:flex;flex-direction:column;gap:8px}
+.hist-item{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.hist-mult{font-size:18px;font-weight:800}
+.hist-mult.low{color:var(--rd)}
+.hist-mult.mid{color:var(--gold)}
+.hist-mult.high{color:var(--gr)}
+.hist-meta{font-size:12px;color:var(--t2)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:max(80px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#23272e;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;z-index:99;white-space:nowrap;max-width:90vw;text-overflow:ellipsis;overflow:hidden}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Profile modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .18s ease}
+.sheet{width:100%;max-width:480px;background:var(--bg2);border-radius:24px 24px 0 0;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-height:80vh;overflow-y:auto}
+.sheet h2{text-align:center;font-size:18px}
+.sheet .av-lg{width:72px;height:72px;border-radius:50%;background:var(--bg3);object-fit:cover;margin:0 auto;display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.pop{animation:popIn .35s var(--ease) both}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authWrap">
+  <h1>🎰 SAIMON Casino</h1>
+  <p>Войдите через аккаунт SAIMONGRAM</p>
+  <form id="authForm">
+    <input id="loginIn" placeholder="Email или @юзернейм" autocapitalize="off" autocorrect="off">
+    <input id="passIn" type="password" placeholder="Пароль" autocomplete="current-password">
+    <div class="err" id="authErr"></div>
+    <button type="submit" class="btn">Войти</button>
+  </form>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" hidden>
+  <div id="topbar">
+    <div class="logo">🎰 Casino</div>
+    <div class="mars-badge">👽 <span id="marsNum">0</span></div>
+    <button id="avatarBtn" onclick="showProfile()"><img id="topAvatar" src="" alt=""></button>
+  </div>
+  <div id="tabs">
+    <button class="tab active" data-tab="crash">🚀 Краш</button>
+    <button class="tab" data-tab="upgrade">⬆️ Апгрейд</button>
+    <button class="tab" data-tab="duel">⚔️ Дуэль</button>
+    <button class="tab" data-tab="history">📜 История</button>
+  </div>
+  <div id="content">
+
+    <!-- CRASH -->
+    <div id="crashTab">
+      <div id="crashScreen">
+        <div id="crashCanvas">
+          <canvas id="cc"></canvas>
+          <div class="mult-display">
+            <div id="multNum" class="waiting">Ждём…</div>
+            <div id="multSub" style="font-size:13px;color:var(--t2);margin-top:4px"></div>
+          </div>
+          <div id="roundInfo">Раунд #<span id="roundNum">—</span></div>
+          <div id="historyDots"></div>
+        </div>
+
+        <div id="crashBetPanel">
+          <div id="betType">
+            <button class="btBtn active" id="bt-mars" onclick="setBetType('mars')">👽 Mars</button>
+            <button class="btBtn" id="bt-nft" onclick="setBetType('nft')">🎁 NFT</button>
+          </div>
+          <div id="marsInput">
+            <input type="number" id="betAmt" placeholder="Ставка Mars" min="1" value="10">
+            <button class="qBtn" onclick="setFrac(.25)">¼</button>
+            <button class="qBtn" onclick="setFrac(.5)">½</button>
+            <button class="qBtn" onclick="setFrac(1)">Всё</button>
+          </div>
+          <div id="nftPicker" style="display:none"></div>
+          <div id="betStatus"></div>
+          <button id="betBtn" onclick="placeBet()">Поставить</button>
+          <button id="cashBtn" onclick="cashOut()">💸 Вывести</button>
+        </div>
+
+        <div id="betsTable">
+          <div class="bt-head"><span>Игрок</span><span>Ставка</span><span>Коэфф</span><span>Профит</span></div>
+          <div id="betRows"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPGRADE -->
+    <div id="upgradeTab" hidden>
+      <div id="upgradeScreen">
+        <div style="color:var(--t2);font-size:14px">Выберите NFT для улучшения. Цена = 30% от стоимости NFT. Рандомный фон и узор — те же шансы что при покупке.</div>
+        <div class="upg-nft-grid" id="myNftGrid"></div>
+        <div id="upgPanel" style="display:none">
+          <div class="big-nft" id="bigNft"></div>
+          <div style="font-size:15px;font-weight:700" id="upgNftName"></div>
+          <div style="font-size:13px;color:var(--t2)" id="upgNftBd"></div>
+          <button class="btn gold" id="upgBtn">🎲 Улучшить</button>
+          <div class="err" id="upgErr"></div>
+          <div id="upgResult">
+            <div class="big-nft pop" id="upgResNft" style="margin-top:8px"></div>
+            <div style="font-size:18px;font-weight:800;margin-top:8px" id="upgResTitle"></div>
+            <div style="font-size:13px;color:var(--t2)" id="upgResSub"></div>
+            <div style="font-weight:700;color:var(--gold)" id="upgResRare"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DUEL -->
+    <div id="duelTab" hidden>
+      <div id="duelScreen">
+        <div style="color:var(--t2);font-size:14px">Выберите режим дуэли NFT.</div>
+        <div class="duel-mode">
+          <div class="dm-card active" id="dm-upgrade" onclick="setDuelMode('upgrade')">
+            <div class="dm-ico">⬆️</div><h3>Повысить тир</h3>
+            <p>Плати 50% стоимости → 50% шанс получить NFT следующего тира</p>
+          </div>
+          <div class="dm-card" id="dm-double" onclick="setDuelMode('double')">
+            <div class="dm-ico">🎲</div><h3>Двойник</h3>
+            <p>50/50: выиграй — получи ещё один NFT того же тира</p>
+          </div>
+        </div>
+        <div id="duelInfo" style="background:var(--bg2);border-radius:14px;padding:14px;font-size:14px;border:1px solid var(--border)"></div>
+        <div style="font-weight:600;font-size:14px">Выберите NFT:</div>
+        <div id="duelPickNft"></div>
+        <button class="btn gold" id="duelBtn" onclick="startDuel()" disabled>⚔️ Начать дуэль</button>
+        <div class="err" id="duelErr"></div>
+        <div id="duelResult">
+          <div class="res-big" id="duelResIco"></div>
+          <div class="res-title" id="duelResTitle"></div>
+          <div class="res-sub" id="duelResSub"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="historyTab" hidden>
+      <div class="hist-list" id="histList"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let me = null, token = null, ws = null, betType = 'mars', selNft = null, selDuelNft = null, duelMode = 'upgrade';
+let myNfts = [], crashPhase = 'waiting', myBet = null, canvasCtx = null, crashHistory = [];
+let BACKDROPS = [], PATTERNS = [], CATALOG_MAP = {};
+
+const CATALOG = [
+  {kind:'heart',rarity:'common',emoji:'💝',name:'Сердечко',price:15,bg:['#ff9aa2','#ff5e7e']},
+  {kind:'star',rarity:'common',emoji:'⭐',name:'Звезда',price:20,bg:['#ffe29a','#ffa751']},
+  {kind:'flower',rarity:'common',emoji:'🌸',name:'Сакура',price:25,bg:['#ffd1dc','#f78fb3']},
+  {kind:'coffee',rarity:'common',emoji:'☕',name:'Кофе',price:30,bg:['#d7b899','#8b5e3c']},
+  {kind:'bear',rarity:'common',emoji:'🧸',name:'Мишка',price:50,bg:['#ffd89b','#f2a65a']},
+  {kind:'cat',rarity:'common',emoji:'🐱',name:'Котик',price:60,bg:['#cfd9ff','#8e9eea']},
+  {kind:'balloon',rarity:'rare',emoji:'🎈',name:'Шарик',price:80,bg:['#ff9a9e','#e8505b']},
+  {kind:'rocket',rarity:'rare',emoji:'🚀',name:'Ракета',price:120,bg:['#a1c4fd','#5b7cfa']},
+  {kind:'gamepad',rarity:'rare',emoji:'🎮',name:'Геймпад',price:150,bg:['#a18cd1','#5f4bb6']},
+  {kind:'rose',rarity:'rare',emoji:'🌹',name:'Роза',price:180,bg:['#ff7e8b','#b3123b']},
+  {kind:'ghost',rarity:'rare',emoji:'👻',name:'Призрак',price:250,bg:['#c9d3ff','#7d8bd1']},
+  {kind:'diamond',rarity:'epic',emoji:'💎',name:'Бриллиант',price:500,bg:['#84fab0','#2bb3c0']},
+  {kind:'unicorn',rarity:'epic',emoji:'🦄',name:'Единорог',price:700,bg:['#f5a8ff','#6fa8ff']},
+  {kind:'crown',rarity:'epic',emoji:'👑',name:'Корона',price:1000,bg:['#f6d365','#e8a020']},
+  {kind:'alien',rarity:'legendary',emoji:'👽',name:'Марсианин',price:2000,bg:['#b0f3a3','#2f9e44']},
+  {kind:'dragon',rarity:'legendary',emoji:'🐉',name:'Дракон',price:5000,bg:['#ff9966','#c0392b']},
+  {kind:'phoenix',rarity:'legendary',emoji:'🦅',name:'Феникс',price:15000,bg:['#ffd200','#f12711']},
+];
+CATALOG.forEach(c => CATALOG_MAP[c.kind] = c);
+const RARITY_NAMES = {common:'Обычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный'};
+
+// ── API ──────────────────────────────────────────────────────────────────
+const api = async (url, method='GET', body) => {
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json', ...(token ? {Authorization:'Bearer '+token} : {})}, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Ошибка сервера');
+  return d;
+};
+
+// ── Toast ────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg) {
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────
+$('#authForm').onsubmit = async e => {
+  e.preventDefault(); $('#authErr').textContent = '';
+  const btn = e.target.querySelector('button'); btn.disabled = true;
+  try {
+    const d = await api('/api/casino/login', 'POST', { login: $('#loginIn').value.trim(), password: $('#passIn').value });
+    token = d.token; me = d.user; myNfts = me.gifts || [];
+    localStorage.setItem('casino_token', token);
+    startApp();
+  } catch (x) { $('#authErr').textContent = x.message; }
+  btn.disabled = false;
+};
+
+async function tryAutoLogin() {
+  const t = localStorage.getItem('casino_token');
+  if (!t) return;
+  try {
+    token = t; const d = await api('/api/casino/me');
+    me = d; myNfts = me.gifts || []; startApp();
+  } catch { localStorage.removeItem('casino_token'); }
+}
+
+function startApp() {
+  $('#authWrap').hidden = true; $('#app').hidden = false;
+  $('#marsNum').textContent = me.mars || 0;
+  const av = $('#topAvatar'); av.src = me.avatar || ''; av.onerror = () => av.src = '';
+  connectWS(); initCanvas(); initNftPicker(); renderUpgradeGrid(); renderDuelPicker(); loadHistory();
+}
+
+// ── WebSocket ────────────────────────────────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onmessage = e => handleWS(JSON.parse(e.data));
+  ws.onclose = () => setTimeout(connectWS, 2000);
+  ws.onerror = () => {};
+}
+
+function handleWS(d) {
+  switch (d.type) {
+    case 'crash:state':
+      updateCrashPhase(d.phase, d.multiplier, d.roundId, d.waitUntil); break;
+    case 'crash:waiting':
+      crashHistory.unshift(null); // placeholder
+      updateCrashPhase('waiting', 1, d.roundId, d.waitUntil); clearBetsTable(); break;
+    case 'crash:start':
+      updateCrashPhase('running', 1, d.roundId); break;
+    case 'crash:tick':
+      updateMult(d.multiplier); break;
+    case 'crash:crash':
+      onCrashed(d); break;
+    case 'crash:bet':
+      addBetRow(d); break;
+    case 'crash:cashout':
+      updateBetRow(d.uid, d.mult, d.profit); break;
+  }
+}
+
+// ── Canvas ───────────────────────────────────────────────────────────────
+let points = [], animFrame = null;
+function initCanvas() {
+  const cv = $('#cc'), wrap = $('#crashCanvas');
+  const resize = () => { cv.width = wrap.clientWidth; cv.height = wrap.clientHeight; };
+  resize(); new ResizeObserver(resize).observe(wrap);
+  canvasCtx = cv.getContext('2d');
+  renderCanvas();
+}
+function renderCanvas() {
+  const cv = $('#cc'), ctx = canvasCtx;
+  if (!ctx) return;
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  if (points.length < 2) { animFrame = requestAnimationFrame(renderCanvas); return; }
+  ctx.beginPath();
+  ctx.moveTo(points[0][0] * W, H - points[0][1] * H * 0.8 - 20);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0] * W, H - points[i][1] * H * 0.8 - 20);
+  ctx.strokeStyle = crashPhase === 'crashed' ? '#f85149' : '#3fb950';
+  ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+  // Fill
+  ctx.lineTo(points[points.length-1][0] * W, H);
+  ctx.lineTo(points[0][0] * W, H);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, crashPhase === 'crashed' ? 'rgba(248,81,73,.3)' : 'rgba(63,185,80,.3)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fill();
+  animFrame = requestAnimationFrame(renderCanvas);
+}
+
+let startTime = null, maxMult = 1;
+function updateCrashPhase(phase, mult, roundId, waitUntil) {
+  crashPhase = phase;
+  $('#roundNum').textContent = roundId || '—';
+  const mn = $('#multNum'), ms = $('#multSub');
+  if (phase === 'waiting') {
+    mn.className = 'waiting'; mn.textContent = 'Ждём…';
+    ms.textContent = 'Принимаются ставки';
+    points = []; maxMult = 1; startTime = null;
+    myBet = null; updateBetUI();
+  } else if (phase === 'running') {
+    startTime = Date.now(); mn.className = 'win'; mn.textContent = '1.00×';
+    ms.textContent = ''; points = [[0, 0]];
+    updateBetUI();
+  } else if (phase === 'crashed') {
+    mn.className = 'crashed'; mn.textContent = mult.toFixed(2) + '×';
+    ms.textContent = '💥 Краш!';
+  }
+}
+function updateMult(mult) {
+  if (crashPhase !== 'running') return;
+  const mn = $('#multNum'); mn.textContent = mult.toFixed(2) + '×';
+  if (mult > 2) mn.style.color = '#f6c90e';
+  if (mult > 5) mn.style.color = '#f85149';
+  const elapsed = (Date.now() - (startTime || Date.now())) / 1000;
+  const maxT = 60;
+  points.push([Math.min(1, elapsed / maxT), Math.min(1, (mult - 1) / 20)]);
+  if (myBet && !myBet.cashedOut) {
+    $('#cashBtn').textContent = `💸 Вывести × ${mult.toFixed(2)}`;
+  }
+}
+function onCrashed(d) {
+  updateCrashPhase('crashed', d.crashAt, null);
+  // Обновляем таблицу
+  for (const uid of d.losers) markLost(uid);
+  for (const w of (d.winners || [])) updateBetRow(w.uid, w.mult, w.profit);
+  // Добавляем в мини-историю
+  addHistoryDot(d.crashAt);
+  if (myBet && !myBet.cashedOut) { toast(`💥 Краш на ${d.crashAt.toFixed(2)}× — вы проиграли`); myBet = null; updateBetUI(); }
+}
+
+function addHistoryDot(mult) {
+  const c = mult < 1.5 ? '#f85149' : mult < 3 ? '#e3b341' : '#3fb950';
+  const dots = $('#historyDots');
+  const d = document.createElement('div');
+  d.className = 'hdot'; d.style.background = c; d.title = mult.toFixed(2) + '×';
+  dots.appendChild(d);
+  while (dots.children.length > 10) dots.removeChild(dots.firstChild);
+}
+
+// ── Bet UI ───────────────────────────────────────────────────────────────
+function setBetType(t) {
+  betType = t;
+  $('#bt-mars').classList.toggle('active', t === 'mars');
+  $('#bt-nft').classList.toggle('active', t === 'nft');
+  $('#marsInput').style.display = t === 'mars' ? 'flex' : 'none';
+  $('#nftPicker').style.display = t === 'nft' ? 'flex' : 'none';
+}
+function setFrac(f) {
+  const max = me ? (me.mars || 0) : 0;
+  $('#betAmt').value = Math.max(1, Math.floor(max * f));
+}
+function initNftPicker() {
+  const picker = $('#nftPicker'); picker.innerHTML = '';
+  myNfts.forEach(g => {
+    const item = CATALOG_MAP[g.kind]; if (!item) return;
+    const chip = document.createElement('div'); chip.className = 'nftChip';
+    chip.innerHTML = `<span class="ne">${item.emoji}</span><span>${item.name} #${g.serial}</span>`;
+    chip.onclick = () => { selNft = g; document.querySelectorAll('.nftChip').forEach(c => c.classList.remove('selected')); chip.classList.add('selected'); };
+    picker.appendChild(chip);
+  });
+  if (!myNfts.length) picker.innerHTML = '<div style="color:var(--t2);font-size:13px;padding:8px">Нет NFT для ставки</div>';
+}
+function updateBetUI() {
+  const phase = crashPhase, hasMyBet = !!myBet;
+  const bb = $('#betBtn'), cb = $('#cashBtn'), bs = $('#betStatus');
+  bb.style.display = hasMyBet ? 'none' : '';
+  cb.style.display = hasMyBet && !myBet.cashedOut && phase === 'running' ? '' : 'none';
+  bb.disabled = hasMyBet || phase === 'running';
+  if (phase === 'waiting') { bb.disabled = false; bb.textContent = 'Поставить'; bs.textContent = '⏳ Принимаются ставки'; }
+  else if (phase === 'running' && !hasMyBet) { bb.disabled = true; bb.textContent = 'Ставки закрыты'; bs.textContent = ''; }
+  else if (hasMyBet && myBet.cashedOut) { bs.textContent = `✅ Выведено × ${myBet.cashAt?.toFixed(2)} (👽 +${myBet.profit})`; }
+  if (me) $('#marsNum').textContent = me.mars || 0;
+}
+
+async function placeBet() {
+  if (crashPhase !== 'waiting') { toast('Ставки закрыты'); return; }
+  const btn = $('#betBtn'); btn.disabled = true;
+  try {
+    let r;
+    if (betType === 'mars') {
+      const amt = parseInt($('#betAmt').value) || 0;
+      r = await api('/api/casino/crash/bet', 'POST', { amount: amt });
+      myBet = { amount: amt, cashedOut: false }; if (me) me.mars = r.mars;
+    } else {
+      if (!selNft) { toast('Выберите NFT'); btn.disabled = false; return; }
+      r = await api('/api/casino/crash/bet-nft', 'POST', { giftId: selNft.id });
+      myBet = { nft: true, nftId: selNft.id, amount: CATALOG_MAP[selNft.kind]?.price || 0, cashedOut: false };
+    }
+    toast('✅ Ставка принята'); updateBetUI();
+  } catch (x) { toast(x.message); btn.disabled = false; }
+}
+async function cashOut() {
+  const btn = $('#cashBtn'); btn.disabled = true;
+  try {
+    const r = await api('/api/casino/crash/cashout', 'POST', {});
+    myBet.cashedOut = true; myBet.cashAt = r.mult; myBet.profit = r.profit;
+    if (me) me.mars = r.mars;
+    toast(`💸 Выведено × ${r.mult.toFixed(2)} · +${r.profit} Mars 🎉`);
+    updateBetUI();
+  } catch (x) { toast(x.message); btn.disabled = false; }
+}
+
+// ── Bets Table ───────────────────────────────────────────────────────────
+let betRowsMap = {};
+function clearBetsTable() { $('#betRows').innerHTML = ''; betRowsMap = {}; }
+function addBetRow(d) {
+  const rows = $('#betRows');
+  const row = document.createElement('div'); row.className = 'bt-row'; row.dataset.uid = d.uid;
+  row.innerHTML = `<span class="user"><img class="av-sm" src="${d.avatar||''}" onerror="this.src=''"> ${d.username||'?'} ${d.nft ? d.emoji||'🎁' : ''}</span><span>👽${d.amount}</span><span>—</span><span>—</span>`;
+  rows.appendChild(row); betRowsMap[d.uid] = row;
+}
+function updateBetRow(uid, mult, profit) {
+  const row = betRowsMap[uid]; if (!row) return;
+  row.className = 'bt-row won';
+  row.children[2].textContent = mult.toFixed(2) + '×';
+  row.children[3].textContent = '+' + profit;
+}
+function markLost(uid) {
+  const row = betRowsMap[uid]; if (!row) return;
+  row.className = 'bt-row lost';
+  row.children[2].textContent = '💥';
+  row.children[3].textContent = '—';
+}
+
+// ── Upgrade ──────────────────────────────────────────────────────────────
+const RARITY_COLORS = {common:'',rare:'rare',epic:'epic',legendary:'legendary'};
+let selUpgNft = null;
+function nftBg(g) {
+  const item = CATALOG_MAP[g.kind]; if (!item) return 'var(--bg3)';
+  return `linear-gradient(135deg,${item.bg[0]},${item.bg[1]})`;
+}
+function renderUpgradeGrid() {
+  const grid = $('#myNftGrid'); grid.innerHTML = '';
+  if (!myNfts.length) { grid.innerHTML = '<div style="color:var(--t2);font-size:14px;grid-column:1/-1">Нет NFT. Купите их в SAIMON мессенджере.</div>'; return; }
+  myNfts.forEach(g => {
+    const item = CATALOG_MAP[g.kind]; if (!item) return;
+    const cost = Math.max(10, Math.round(item.price * 0.3));
+    const card = document.createElement('div'); card.className = 'upg-card';
+    card.innerHTML = `<div class="upg-badge ${RARITY_COLORS[item.rarity]}">${RARITY_NAMES[item.rarity]||''}</div><span class="upg-emoji">${item.emoji}</span><div class="upg-name">${item.name} #${g.serial}</div><div class="upg-sub">👽 ${cost} Mars</div>`;
+    card.onclick = () => { document.querySelectorAll('.upg-card').forEach(c=>c.classList.remove('sel')); card.classList.add('sel'); selectUpgNft(g); };
+    grid.appendChild(card);
+  });
+}
+function selectUpgNft(g) {
+  selUpgNft = g; const item = CATALOG_MAP[g.kind];
+  const panel = $('#upgPanel'); panel.style.display = 'flex';
+  $('#upgResult').classList.remove('show');
+  const bn = $('#bigNft'); bn.style.background = nftBg(g);
+  bn.innerHTML = `<span style="font-size:48px">${item.emoji}</span><div class="bd-label">#${g.serial}</div>`;
+  $('#upgNftName').textContent = item.name + ' · ' + (RARITY_NAMES[item.rarity]||'');
+  const cost = Math.max(10, Math.round(item.price * 0.3));
+  $('#upgBtn').textContent = `🎲 Улучшить за 👽 ${cost} Mars`; $('#upgErr').textContent = '';
+}
+$('#upgBtn').onclick = async () => {
+  if (!selUpgNft) return;
+  const btn = $('#upgBtn'); btn.disabled = true; btn.textContent = 'Улучшение…';
+  try {
+    const r = await api('/api/casino/upgrade', 'POST', { giftId: selUpgNft.id });
+    if (me) me.mars = r.mars; $('#marsNum').textContent = me.mars;
+    // Обновляем NFT в списке
+    const gi = myNfts.findIndex(x => x.id === selUpgNft.id);
+    if (gi !== -1) { myNfts[gi] = {...myNfts[gi], ...r.gift}; selUpgNft = myNfts[gi]; }
+    const item = CATALOG_MAP[selUpgNft.kind];
+    const res = $('#upgResult'), rn = $('#upgResNft');
+    rn.style.background = nftBg(selUpgNft);
+    rn.innerHTML = `<span style="font-size:48px">${item.emoji}</span>`;
+    $('#upgResTitle').textContent = '✨ Новая модель!';
+    $('#upgResSub').textContent = `${r.gift.bdName || '—'} · ${r.gift.ptName || '—'}`;
+    const isRare = (r.gift.bdPct || 99) < 5 || (r.gift.ptPct || 99) < 5;
+    $('#upgResRare').textContent = isRare ? '🔥 Редкая комбинация!' : '';
+    res.classList.add('show');
+    toast('✨ NFT улучшен!');
+    const cost = Math.max(10, Math.round(item.price * 0.3));
+    btn.textContent = `🎲 Улучшить ещё за 👽 ${cost} Mars`;
+  } catch (x) { $('#upgErr').textContent = x.message; }
+  btn.disabled = false;
+};
+
+// ── Duel ─────────────────────────────────────────────────────────────────
+function setDuelMode(m) {
+  duelMode = m;
+  $('#dm-upgrade').classList.toggle('active', m === 'upgrade');
+  $('#dm-double').classList.toggle('active', m === 'double');
+  if (m === 'upgrade') $('#duelInfo').innerHTML = '⬆️ <b>Повышение тира:</b> платишь 50% стоимости NFT и бросаешь монету. Орёл — NFT становится следующего тира (рандомный). Решка — деньги потеряны, NFT остаётся.';
+  else $('#duelInfo').innerHTML = '🎲 <b>Двойник:</b> бросаешь монету. Орёл — получаешь ещё один рандомный NFT того же тира. Решка — теряешь свой NFT.';
+}
+function renderDuelPicker() {
+  const p = $('#duelPickNft'); p.innerHTML = '';
+  myNfts.forEach(g => {
+    const item = CATALOG_MAP[g.kind]; if (!item) return;
+    const chip = document.createElement('div'); chip.className = 'nftChip';
+    chip.innerHTML = `<span class="ne">${item.emoji}</span><span>${item.name} #${g.serial}</span>`;
+    chip.onclick = () => { selDuelNft = g; document.querySelectorAll('#duelPickNft .nftChip').forEach(c=>c.classList.remove('selected')); chip.classList.add('selected'); $('#duelBtn').disabled = false; };
+    p.appendChild(chip);
+  });
+  if (!myNfts.length) p.innerHTML = '<div style="color:var(--t2);font-size:13px;padding:8px">Нет NFT</div>';
+}
+setDuelMode('upgrade');
+
+async function startDuel() {
+  if (!selDuelNft) return;
+  const btn = $('#duelBtn'); btn.disabled = true; $('#duelErr').textContent = '';
+  const item = CATALOG_MAP[selDuelNft.kind];
+  try {
+    const r = await api('/api/casino/nft-duel', 'POST', { myGiftId: selDuelNft.id, mode: duelMode });
+    const res = $('#duelResult'), ico = $('#duelResIco'), title = $('#duelResTitle'), sub = $('#duelResSub');
+    res.className = 'show';
+    if (r.win) {
+      ico.textContent = '🎉'; title.textContent = 'Победа!'; title.style.color = 'var(--gr)';
+      if (duelMode === 'upgrade') {
+        const ni = CATALOG_MAP[r.newKind]; sub.textContent = `NFT улучшен до: ${ni?.name || r.newKind} ${ni?.emoji || ''} (${RARITY_NAMES[ni?.rarity]||''})`;
+        const gi = myNfts.findIndex(x=>x.id===selDuelNft.id);
+        if (gi !== -1 && r.gift) myNfts[gi] = {...myNfts[gi],...r.gift};
+      } else sub.textContent = `Ты получил ещё один ${item.name} ${item.emoji}!`;
+      toast('🎉 Победа в дуэли!');
+    } else {
+      ico.textContent = '💀'; title.textContent = 'Поражение'; title.style.color = 'var(--rd)';
+      if (duelMode === 'upgrade') sub.textContent = `Ставка 👽${Math.round(item.price*0.5)} Mars потеряна. NFT остался.`;
+      else { sub.textContent = `${item.name} #${selDuelNft.serial} утерян.`; myNfts = myNfts.filter(x=>x.id!==selDuelNft.id); }
+      toast('💀 Поражение в дуэли');
+    }
+    if (r.mars !== undefined && me) { me.mars = r.mars; $('#marsNum').textContent = me.mars; }
+    selDuelNft = null; renderDuelPicker(); renderUpgradeGrid();
+  } catch (x) { $('#duelErr').textContent = x.message; btn.disabled = false; }
+}
+
+// ── History ───────────────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const h = await api('/api/casino/history');
+    const list = $('#histList'); list.innerHTML = '';
+    h.slice(0,40).forEach(r => {
+      const c = r.crashAt < 1.5 ? 'low' : r.crashAt < 3 ? 'mid' : 'high';
+      const winners = (r.bets||[]).filter(b=>b.cashedOut).length;
+      const el = document.createElement('div'); el.className = 'hist-item';
+      el.innerHTML = `<div><div class="hist-mult ${c}">${r.crashAt.toFixed(2)}×</div><div class="hist-meta">Раунд #${r.roundId}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:600">${winners} вышли</div><div class="hist-meta">${new Date(r.at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+      list.appendChild(el);
+    });
+    if (!h.length) list.innerHTML = '<div style="color:var(--t2);text-align:center;padding:30px">История пустая — сыграйте первый раунд!</div>';
+  } catch {}
+}
+
+// ── Profile sheet ─────────────────────────────────────────────────────────
+function showProfile() {
+  const sheet = document.createElement('div'); sheet.className = 'overlay';
+  sheet.innerHTML = `<div class="sheet"><div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto -4px"></div>
+<img class="av-lg" src="${me.avatar||''}" onerror="this.src=''">
+<div style="text-align:center"><div style="font-size:18px;font-weight:700">${me.username||''}</div><div style="color:var(--t2);font-size:14px">@${me.handle||''}</div></div>
+<div style="background:var(--bg3);border-radius:14px;padding:14px;text-align:center"><div style="font-size:13px;color:var(--t2)">Баланс</div><div style="font-size:28px;font-weight:800">👽 ${me.mars||0} Mars</div></div>
+<div style="font-weight:600">Мои NFT (${myNfts.length})</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">${myNfts.map(g=>{ const it=CATALOG_MAP[g.kind]; return it ? `<div style="background:linear-gradient(135deg,${it.bg[0]},${it.bg[1]});padding:8px 12px;border-radius:12px;font-size:13px;font-weight:600">${it.emoji} ${it.name} #${g.serial}</div>` : ''; }).join('')||'<div style="color:var(--t2);font-size:13px">Нет NFT</div>'}</div>
+<button class="btn rd" onclick="logout()">Выйти</button></div>`;
+  sheet.onclick = e => { if (e.target === sheet) sheet.remove(); };
+  document.body.appendChild(sheet);
+}
+function logout() { localStorage.removeItem('casino_token'); location.reload(); }
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  ['crash','upgrade','duel','history'].forEach(n => { const el = $(`#${n}Tab`); if(el) el.hidden = true; });
+  const el = $(`#${t.dataset.tab}Tab`); if (el) el.hidden = false;
+  if (t.dataset.tab === 'history') loadHistory();
+});
+
+// ── Crash state init ──────────────────────────────────────────────────────
+fetch('/api/casino/state').then(r=>r.json()).then(d => {
+  updateCrashPhase(d.phase, d.multiplier, d.roundId, d.waitUntil);
+}).catch(()=>{});
+
+tryAutoLogin();
+</script>
+</body>
+</html>
