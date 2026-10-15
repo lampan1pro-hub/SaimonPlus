@@ -1,4 +1,4 @@
-// SAIMON CASINO — отдельный сервер, общая база пользователей с SAIMONGRAM
+// SAIMN CASINO — отдельный сервер, общая база пользователей с SAIMONGRAM
 // Использует тот же DATABASE_URL и те же таблицы users/gifts
 const express = require('express');
 const http = require('http');
